@@ -25,6 +25,13 @@
                 </div>
                 <div class="col-md-4">
                     <br>
+                    {%if mensaje%}
+
+                    <div class="alert alert-danger" role="alert">
+                      <strong>{{ mensaje }}</strong>
+                    </div>
+                      
+                    {% endif%}
                   <div class="card">
                     <div class="card-header">
                         Inicio de sesión

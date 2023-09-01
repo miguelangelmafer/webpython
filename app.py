@@ -25,8 +25,11 @@ def inicio():
 
 @app.route('/img/<imagen>')
 def imagenes(imagen):
-    print(imagen)
     return send_from_directory(os.path.join('templates/Sitio/img'),imagen)
+
+@app.route("/css/<archivocss>")
+def css_link(archivocss):
+    return send_from_directory(os.path.join('templates/sitio/css'),archivocss)
 
 @app.route('/libros')
 def libros():
@@ -36,7 +39,6 @@ def libros():
     cursor.execute("SELECT * FROM `libros`")
     libros=cursor.fetchall()
     conexion.commit()
-    print(libros)
 
     return render_template('sitio/libros.html', libros=libros)
 
@@ -46,6 +48,10 @@ def nosotros():
 
 @app.route('/admin/')
 def admin_index():
+     
+    if not 'login' in session:
+        return redirect("/admin/login")
+     
     return render_template('admin/index.html')
 
 @app.route('/admin/login')
@@ -56,15 +62,13 @@ def admin_login():
 def admin_login_post():
     _usuario=request.form['txtUsuario']
     _password=request.form['txtPassword']
-    print(_usuario)
-    print(_password)
 
     if _usuario=="admin" and _password=="123456":
         session["login"]=True
         session["usuario"]="Administrador"
         return redirect("/admin")
 
-    return render_template('admin/login.html')
+    return render_template('admin/login.html', mensaje="Acceso denegado")
 
 @app.route('/admin/cerrar')
 def admin_login_cerrar():
@@ -75,18 +79,25 @@ def admin_login_cerrar():
 @app.route('/admin/libros')
 def admin_libros():
     # Recuperación datos en BD
+
+    if not 'login' in session:
+        return redirect("/admin/login")
+    
     conexion=mysql.connect()
     cursor=conexion.cursor()
     cursor.execute("SELECT * FROM `libros`")
     libros=cursor.fetchall()
     conexion.commit()
-    print(libros)
 
     return render_template('admin/libros.html',libros=libros)
 
 # Permite la recepción de inputs de un formulario
 @app.route('/admin/libros/guardar', methods=['POST'])
 def admin_libros_guardar():
+
+    if not 'login' in session:
+            return redirect("/admin/login")
+    
     _nombre = request.form['txtNombre']
     _url = request.form['txtURL']
     _archivo = request.files['txtImagen']
@@ -106,14 +117,14 @@ def admin_libros_guardar():
     cursor.execute(sql,datos)
     conexion.commit()
 
-    print(_nombre)
-    print(_url)
-    print(_archivo)
-
     return redirect('/admin/libros')
 
 @app.route('/admin/libros/borrar', methods=['POST'])
 def admin_libros_borrar():
+    
+    if not 'login' in session:
+        return redirect("/admin/login")
+
     _id=request.form['txtID']
     print(_id)
 
@@ -122,7 +133,6 @@ def admin_libros_borrar():
     cursor.execute("SELECT imagen FROM `libros` WHERE id=%s",(_id))
     libro=cursor.fetchall()
     conexion.commit()
-    print(libro)
 
     #Borra la imagen de la carpeta img
     if(os.path.exists("templates/sitio/img/"+str(libro[0][0]))):
